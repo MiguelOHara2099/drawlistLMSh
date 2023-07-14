@@ -3,21 +3,26 @@ import cv2
 import mediapipe as mp
 
 class DragAndDropCircle:
-    def __init__(self, px, py, radius=50, color=(255, 0, 255)):
+    def __init__(self, px, py, radius=50, color_index = 0):
         self.px = px
         self.py = py
         self.radius = radius
-        self.color = color
+        self.color_index = color_index
+        self.colors = [(255, 0, 255), (0, 255, 0), (0, 0, 255)]
 
     def update(self, new_px, new_py):
         cx, cy, = self.px, self.py
         if math.hypot(new_px - cx, new_py - cy) > 50:
             self.px, self.py = new_px, new_py
 
+    def get_color(self):
+        return self.colors[self.color_index % len(self.colors)]
+
 cap = cv2.VideoCapture(0)
 cap.set(3, 1280)
 cap.set(4, 720)
 circles = []
+color_index= 0
 
 mpHands = mp.solutions.hands
 hands = mpHands.Hands()
@@ -55,15 +60,16 @@ while True:
         length1 = math.hypot(abs(x4 - x3), abs(y4- y3))
 
         if length < 40:
-            circ = DragAndDropCircle(x1, y1)
+            circ = DragAndDropCircle(x1, y1,  color_index=color_index)
             circles.append(circ)
         
         elif length1 < 10:
             circles = []
+            color_index += 1
 
 
     for circ in circles:
-        cv2.circle(img, (int(circ.px), int(circ.py)), circ.radius, circ.color, cv2.FILLED)
+        cv2.circle(img, (int(circ.px), int(circ.py)), circ.radius, circ.get_color(), cv2.FILLED)
 
     cv2.imshow("Image", img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
